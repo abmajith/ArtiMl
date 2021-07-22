@@ -45,7 +45,7 @@ long Sq_Normtwo_Ln(long *col, int m){
 
 
 
-/* here after the pointer to pointer of a matrix storage method*/
+/* here the pointer to pointer of a matrix storage method*/
 /* n by m matrix*/
 /*ptrA1 ptrA1 ptrA2 ..... prAm */
 /*a11    a12   a13         a1m */
@@ -61,7 +61,7 @@ int HHdRl_Sqmat_Itr_Db(double **ptrR, int m, int k1 ){ /* R is the matrix of m c
   /*k1 should be non zero positive value */
   /*ptrR is the pointer to pointers of m arrays, each array has size m */
   if ( k1 >= m || k1 < 1 ) /* if k1 is less then 1 or greater than or equal to m then nothing to do */
-    return 2; /* indicating dimenstion mismatch*/
+    return 2; /* indicating dimention mismatch*/
 
   int k = k1 - 1; /* cprogram convention for the index*/
   int len = m - k; /* dimension of the submatrix and this is correct, checked multiple times*/
@@ -74,13 +74,17 @@ int HHdRl_Sqmat_Itr_Db(double **ptrR, int m, int k1 ){ /* R is the matrix of m c
   double sigma, alpha; /* sigma for square of norm two, alpha for norm two*/
   sigma = (double) Sq_Normtwo_Db(ptr, len);
   alpha = (double) sqrt(sigma);
+  if (sigma == 0.0) /* in the future for stable result have to introduce some epsilon value instead of zero*/
+    return 3; /* indicating singular nature of the matrix*/
+
   /* if calculated norm is same as the pivot then divide by zero occurs in the rotation so */
-    if (alpha == pivot)
-      return 1; /* indicating that alpha is equal to pivot*/
+  if (alpha == pivot)
+    alpha = 0.0 - alpha;/*changing the sign to avoid divide by zero case */
 
   double nf; /* normalization factor to compute Q for the len by len submatrix*/
   nf = sigma - alpha * pivot;
   double Q[len][len], BR[len][len]; /* to store the rotated submatrix of R for making the k+1K+2K..m to zero */
+
   /*Q = Identity matrix len by  len - (1over nf ) outer  product of u1 and u1T */
   Q[0][0] = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
   for (int i = 1; i < len; i++) /*filling diagonal element */
@@ -105,9 +109,10 @@ int HHdRl_Sqmat_Itr_Db(double **ptrR, int m, int k1 ){ /* R is the matrix of m c
           init += Q[i][z] * *(*(ptrR + j + k) + z + k);
         BR[i][j] = init;
       } /* bottom right of new R is computed*/
-    for (int i = 0; i < len; i++)
-      for (int j = 0; j < len; j++)
-        *(*(ptrR + j + k) + i + k) = BR[i][j]; /*copying the new BR of R to existing R (memory) */
+
+  for (int i = 0; i < len; i++)
+    for (int j = 0; j < len; j++)
+      *(*(ptrR + j + k) + i + k) = BR[i][j]; /*copying the new BR of R to existing R (memory) */
 
     /* now we have to compute the new R Bottom left submatrix*/
     /* if k is zero, we dont have to so*/
@@ -126,7 +131,8 @@ int HHdRl_Sqmat_Itr_Db(double **ptrR, int m, int k1 ){ /* R is the matrix of m c
       for (int j = 0; j < (m - len); j++)
         *(*(ptrR + j) + i + k) = BL[i][j]; /*copying the new BL of R to exisitng R (memory) */
   }
-  return 0; /* indicating that succesfully it is computed!*/
+  return 0; /* indicating that succesfully computed!*/
+
 }/* This code is double checked!*/
 
 
@@ -137,7 +143,8 @@ int HHdRl_Sqmat_Itr_Fl(float **ptrR, int m, int k1 ){ /* R is the matrix of m cr
   /*k1 should be non zero positive value */
   /*ptrR is the pointer to pointers of m arrays, each array has size m */
   if ( k1 >= m || k1 < 1 )
-    return 2; /* if k1 is equal or more than m nothing to do*/
+    return 2; /* indicating dimension mismatch*/
+
   int k = k1 - 1; /* cprogram convention for the index*/
   int len = m - k; /* dimension of the submatrix and this is correct checked multiple times*/
   float init = 0.0;
@@ -149,13 +156,18 @@ int HHdRl_Sqmat_Itr_Fl(float **ptrR, int m, int k1 ){ /* R is the matrix of m cr
   float sigma, alpha; /* sigma for square of norm two, alpha for norm two*/
   sigma = (float) Sq_Normtwo_Db(ptr, len);
   alpha = (float) sqrt(sigma);
+  
+  if (sigma == 0.0) /* in the future for stable result have to introduce some epsilon value instead of zero*/
+    return 3; /* indicating singular nature of the matrix*/
+
   /* if calculated norm is same as the pivot then divide by zero occurs in the rotation so */
-    if (alpha == pivot)
-      return 1;
+  if (alpha == pivot)
+    alpha = 0.0 - alpha;
 
   float nf; /* normalization factor to compute Q for the len by len submatrix*/
   nf = sigma - alpha * pivot;
   float Q[len][len], BR[len][len]; /* to store the rotated submatrix of R for making the k+1K+2K..m to zero */
+
   /*Q = Identity matrix len by  len - (1over nf ) outer  product of u1 and u1T */
   Q[0][0] = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
   for (int i = 1; i < len; i++) /*filling diagonal element */
@@ -179,9 +191,9 @@ int HHdRl_Sqmat_Itr_Fl(float **ptrR, int m, int k1 ){ /* R is the matrix of m cr
           init += Q[i][z] * *(*(ptrR + j + k) + z + k);
         BR[i][j] = init;
       } /* bottom right of new R is computed*/
-    for (int i = 0; i < len; i++)
-      for (int j = 0; j < len; j++)
-        *(*(ptrR + j + k) + i + k) = BR[i][j]; /*copying the new BR of R to existing R (memory) */
+  for (int i = 0; i < len; i++)
+    for (int j = 0; j < len; j++)
+      *(*(ptrR + j + k) + i + k) = BR[i][j]; /*copying the new BR of R to existing R (memory) */
 
     /* now we have to compute the new R Bottom left submatrix*/
     /* if k is zero, we dont have to so*/
@@ -224,11 +236,11 @@ int QR_HH_Itr_Db (double **ptrA, double **ptrQ, double **ptrR, int m, int n, int
 
   if (m <= n)
     if (k1 >= m )
-      return 2;
+      return 2; /*dimension mismatch */
   if (n < m)
     if (k1 > n)
       return 2;
-  if (k1 <= 0)
+  if (k1 < 1)
     return 2;
 
 
@@ -248,9 +260,14 @@ int QR_HH_Itr_Db (double **ptrA, double **ptrQ, double **ptrR, int m, int n, int
     ptr = *ptrA;
     sigma = (double) Sq_Normtwo_Db(ptr, len);
     alpha = (double) sqrt(sigma);
-   /* if calculated norm is same as the pivot then divide by zero occurs in the reflection */
+    /* if sigma is zero then that column is zero nothing to do for that column */
+    if (sigma == 0.0)
+      return 3;
+
+   /* if calculated norm is same as the pivot then divide by zero occurs in the reflection so */
     if (alpha == pivot)
-      return 1;
+      alpha = 0.0 - alpha;
+
     nf = sigma - alpha * pivot;
     /* computing the Q matrix first Im*m - v outer product v / nf*/
     *(*(ptrQ + 0) + 0)  = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
@@ -279,10 +296,17 @@ int QR_HH_Itr_Db (double **ptrA, double **ptrQ, double **ptrR, int m, int n, int
     ptr = *(ptrR + k) + k;
     sigma = (double) Sq_Normtwo_Db(ptr, len);
     alpha = (double) sqrt(sigma);
+    /* if the sigma is zero, then nothing to do there */
+
+    if (sigma == 0.0)
+      return 3;
+
    /* if calculated norm is same as the pivot then divide by zero occurs in the rotation */
     if (alpha == pivot)
-      return 1;
+      alpha = 0.0 - alpha;
+
     nf = sigma - alpha * pivot;
+    double Q[len][len]; /* to store the rotated submatrix of R for making the k+1K+2K..m to zero */
     /* computing the Q matrix first Ilen*len - v outer product v / nf*/
     Q[0][0] = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
     for (int i = 1; i < len; i++) /*filling diagonal element */
@@ -315,13 +339,13 @@ int QR_HH_Itr_Db (double **ptrA, double **ptrQ, double **ptrR, int m, int n, int
         QTR[i][j] = init;
         }
       /* computing bottom right block */
-      for (int i = 0; i < len; i++)
-        for (int j = 0; j < len; j++){
-          init = 0.0;
-          for (int z = 0; z < len; z++)
-            init +=  *(*(ptrQ + k + z ) + j + k )    * Q[z][j];
-          QBR[i][j] = init;
-        }
+    for (int i = 0; i < len; i++)
+      for (int j = 0; j < len; j++){
+        init = 0.0;
+        for (int z = 0; z < len; z++)
+          init +=  *(*(ptrQ + k + z ) + j + k )    * Q[z][j];
+        QBR[i][j] = init;
+      }
 
       /* copying the computed blocks to the memory of ptrQ */
       for (int i = 0; i < k; i++)
@@ -400,9 +424,14 @@ int QR_HH_Itr_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n, int k1
     ptr = *ptrA;
     sigma = (float) Sq_Normtwo_Fl(ptr, len);
     alpha = (float) sqrt(sigma);
+    /*If the sigma is zero then nothing to do for that column */
+    if (sigma == 0.0)
+      return 3;
+
    /* if calculated norm is same as the pivot then divide by zero occurs in the reflection */
     if (alpha == pivot)
-      return 1;
+      alpha = 0.0 - alpha;
+
     nf = sigma - alpha * pivot;
     /* computing the Q matrix first Im*m - v outer product v / nf*/
     *(*(ptrQ + 0) + 0)  = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
@@ -431,10 +460,16 @@ int QR_HH_Itr_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n, int k1
     ptr = *(ptrR + k) + k;
     sigma = (float) Sq_Normtwo_Fl(ptr, len);
     alpha = (float) sqrt(sigma);
+    /* if the sigma is zero, then nothing to for that column*/
+    if (sigma == 0.0)
+      return 3;
+
    /* if calculated norm is same as the pivot then divide by zero occurs in the rotation */
     if (alpha == pivot)
-      return 1;
+      alpha = 0.0 - alpha;
+
     nf = sigma - alpha * pivot;
+    float Q[len][len];
     /* computing the Q matrix first Ilen*len - v outer product v / nf*/
     Q[0][0] = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
     for (int i = 1; i < len; i++) /*filling diagonal element */
@@ -466,14 +501,15 @@ int QR_HH_Itr_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n, int k1
           init += *(*(ptrQ + k + z ) + j )   *  Q[z][j];
         QTR[i][j] = init;
         }
+
       /* computing bottom right block */
-      for (int i = 0; i < len; i++)
-        for (int j = 0; j < len; j++){
-          init = 0.0;
-          for (int z = 0; z < len; z++)
-            init +=  *(*(ptrQ + k + z ) + j + k )    * Q[z][j];
-          QBR[i][j] = init;
-        }
+    for (int i = 0; i < len; i++)
+      for (int j = 0; j < len; j++){
+        init = 0.0;
+        for (int z = 0; z < len; z++)
+          init +=  *(*(ptrQ + k + z ) + j + k )    * Q[z][j];
+        QBR[i][j] = init;
+      }
 
       /* copying the computed blocks to the memory of ptrQ */
       for (int i = 0; i < k; i++)
@@ -532,34 +568,211 @@ int QR_HH_Itr_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n, int k1
 
 /*QR Decomposition */
 /* of matrix A whose size is m cross n */
-void QR_HHdRl_Db (double **ptrA, double **ptrQ, double **ptrR, int m, int n){
+int QR_HHdRl_Db (double **ptrA, double **ptrQ, double **ptrR, int m, int n){
   /* ptrA is the pointer of pointers of n array, each array has length m */
   /* ptrQ is the pointer of pointers of m arrays, each array has length m */
   /* ptrR is the pointer of pointers of n arrays, each array has length m */
-  if (m > n) /* this QR designed for specific dimension, although modifying them is not a big deal!*/
-    return;
-  for (int i = 0; i < m - 1; i++){
-    QQ_HH_Itr_Db(**ptrA, **ptrQ, **ptrR, m, n, (i + 1) );
-  }
-  return;
+   /* this QR designed for specific dimension, although modifying them is not a big deal!*/
+  int status;
+  if (m < n)
+    for (int i = 0; i < m - 1; i++ ){
+      status = QQ_HH_Itr_Db(**ptrA, **ptrQ, **ptrR, m, n, (i + 1) );
+      if (status == 3)
+        printf("Non - Singular matrix \n");
+      if (status == 2)
+        printf("Dimension mismatch \n");
+    }
+  else
+    for (int i = 0; i < n - 1; i++ ){
+      status = QQ_HH_Itr_Db(**ptrA, **ptrQ, **ptrR, m, n, (i + 1) );
+      if (status == 3)
+        printf("Non - Singular matrix \n");
+      if (status == 2)
+        printf("Dimension mismatch \n");
+    }
+  return 0;
 }
 
-void QR_HHdRl_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n){
+int QR_HHdRl_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n){
   /* ptrA is the pointer of pointers of n array, each array has length m */
   /* ptrQ is the pointer of pointers of m arrays, each array has length m */
   /* ptrR is the pointer of pointers of n arrays, each array has length m */
-  if (m > n) /* this QR designed for specific dimension, although modifying them is not a big deal!*/
-    return;
-  for (int i = 0; i < m - 1; i++){
-    QQ_HH_Itr_Fl(**ptrA, **ptrQ, **ptrR, m, n, (i + 1) );
-  }
-  return;
+  /* this QR designed for specific dimension, although modifying them is not a big deal!*/
+  if (m < n)
+    for (int i = 0; i < m - 1; i++ ){
+      status = QQ_HH_Itr_Db(**ptrA, **ptrQ, **ptrR, m, n, (i + 1) );
+      if (status == 3)
+        printf("Non - Singular matrix \n");
+      if (status == 2)
+        printf("Dimension mismatch \n");
+    }
+  else
+    for (int i = 0; i < n - 1; i++ ){
+      status = QQ_HH_Itr_Db(**ptrA, **ptrQ, **ptrR, m, n, (i + 1) );
+      if (status == 3)
+        printf("Non - Singular matrix \n");
+      if (status == 2)
+        printf("Dimension mismatch \n");
+    }
+  return 0;
 }
 
-/* The above functions are primitive only, you can use more eloborate manner to check the non-singular nature of the matrix*/
-/* what ever the overestimate or underestimate linear least square solver, arange A such that m >= n tall and short matrix 
- * if underestimate equations form use the transformation to get the required vector x values*/
-/* For the overestimate equations use the matrix as it is to get the required vecotr x values*/
-/* in both way we will get minimum norm solutions by backward substituion method*/
 
-/* each function instead of returning void, putting some number can transfer error type (from some home made dictonary). Think about it*/
+
+/* -------------------------------------------------------------------------*/
+/* Least square solvers */
+
+
+/* For the overdeterminated equations*/
+/* Too many equations for unknown number of variables */
+/* A m by n matrix m >= n   A x = b, b is  m by one and x is n by one*/
+/* solution A = QR by householder transformation, Q is m by m, R is m by n*/
+/* QRx = b => Rx = Q^{T} b */
+/* then by backward substituion method find x vector*/
+
+int Over_det_solver_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n, float *ptrB, float *ptrX){
+  /* ptrA, ptrB are the same size, ptrQ is m by m, ptrB is m by one, ptrX is n by one number of unknowns!*/
+  if (m < n)
+    return 4; /* not an overdeterminated case */
+  QR_HHdRl_Fl(float **ptrA, float **ptrQ, float **ptrR, int m, int n); /* To find A = QR*/
+  float B[n]; /* to store Q^{T} b */
+  float z;
+  for (int i = 0; i < n; i++){
+    z = 0.0;
+    for (int j = 0; j < m; j++)
+      z += *(*(ptrQ + i)  + j)   *  *(ptrB + j);
+    B[i] = z;
+  }
+  /* now need to do backward substitution*/
+  if ( *(*(ptrR + n - 1) + n - 1) == 0.0 )
+    return 3;
+  *(ptrX + n - 1) = B[n-1] / *(*(ptrR + n - 1) + n - 1);
+  for (int i = n - 2; i >= 0; i-- ){
+    z = 0.0;
+    for (int j = n - 1; j < i; j--)
+      z +=  *(*(ptrR + j) + i)  *  B[j];
+    if ( *(*(ptrR + i) + i) == 0.0 )
+      return 3;
+    *(ptrX + i) = ( B[i] - z ) / *(*(ptrR + i) + i);
+  }
+  return 0;
+}
+
+
+int Over_det_solver_Db (double **ptrA, double **ptrQ, double **ptrR, int m, int n, double *ptrB, double *ptrX){
+  /* ptrA, ptrB are the same size, ptrQ is m by m, ptrB is m by one, ptrX is n by one number of unknowns!*/
+  if (m < n)
+    return 4; /* not an overdeterminated case */
+  QR_HHdRl_Db(double **ptrA, double **ptrQ, double **ptrR, int m, int n); /* To find A = QR*/
+  double B[n]; /* to store Q^{T} b */
+  double z;
+  for (int i = 0; i < n; i++){
+    z = 0.0;
+    for (int j = 0; j < m; j++)
+      z += *(*(ptrQ + i)  + j)   *  *(ptrB + j);
+    B[i] = z;
+  }
+  /* now need to do backward substitution*/
+  if ( *(*(ptrR + n - 1) + n - 1) == 0.0 )
+    return 3;
+  *(ptrX + n - 1) = B[n-1] / *(*(ptrR + n - 1) + n - 1);
+  for (int i = n - 2; i >= 0; i-- ){
+    z = 0.0;
+    for (int j = n - 1; j < i; j--)
+      z +=  *(*(ptrR + j) + i)  *  B[j];
+    if ( *(*(ptrR + i) + i) == 0.0 )
+      return 3;
+    *(ptrX + i) = ( B[i] - z ) / *(*(ptrR + i) + i);
+  }
+  return 0;
+}
+
+
+
+
+/* For the undetermined equations */
+/* A n by m matrix n <= m, A x = b n by one, x is m by one */
+/* A^{T} now m by n matrix*/ 
+/* Compute A^{T} = QR by householder transformation, Q is m by m, R is m by n */
+/* A^{T} x = R^{T} Q^{T} x = [R1^{T} , zero] [Q1^{T}; Q2^{T}] x = b*/
+/* R1^{T} Q1^{T} x = b*/
+/* let Q1^{T}x = y*/
+/* use backward substituion method to compute y*/
+/* now use the orthogonal nature of the Q1 i.e Q^{Inv} = Q^{T}*/
+/* x = Q1 y*/
+
+
+/* Assume that given matrix is came with transpose itself, our ideaology, we never create any memory in the calling functions, so 
+ * the main function has to do how to create and destroy memory for that reason we never create or destroy memory in the functions!*/
+
+int Under_det_solver_Fl (float **ptrAT, float **ptrQ, float **ptrR, int m, int n, float *ptrB, float *ptrX){
+  /* ptrAT, ptrR have same size m by n, ptrQ is m by m, ptrB is n by one, ptrX is m by one*/
+  if (m < n)
+    return 4; /* not an underdeterminated case */
+  QR_HHdRl_Fl(float **ptrAT, float **ptrQ, float **ptrR, int m, int n); /* To find AT = QR*/
+  float Y[n]; /* to compute Q1y*/
+  float z;
+  /* now need to do backward substitution*/
+  if ( *(*(ptrR + n - 1) + n - 1) == 0.0 )
+    return 3;
+  Y[n - 1] = *(ptrB + n - 1) / *(*(ptrR + n - 1) + n - 1);
+  for (int i = n - 2; i >= 0; i-- ){
+    z = 0.0;
+    for (int j = n - 1; j < i; j--)
+      z +=  *(*(ptrR + i) + j)  *  Y[j];
+    if ( *(*(ptrR + i) + i) == 0.0 )
+      return 3;
+    Y[i] = ( *(ptrB + i) - z ) / *(*(ptrR + i) + i);
+  }
+  /*computing X = Q times Y */
+  for (int i = 0; i < m; i++){
+    z = 0.0;
+    for (int j = 0; j < n; j++){
+      z += Y[j] * *(*(ptrQ + j) + i);
+    }
+    *(ptrX + i) = z;
+  }
+  return 0;
+}
+
+
+int Under_det_solver_Db (double **ptrAT, double **ptrQ, double **ptrR, int m, int n, double *ptrB, double *ptrX){
+  /* ptrAT, ptrR have same size m by n, ptrQ is m by m, ptrB is n by one, ptrX is m by one*/
+  if (m < n)
+    return 4; /* not an underdeterminated case */
+  QR_HHdRl_Db(double **ptrAT, double **ptrQ, double **ptrR, int m, int n); /* To find A^{T} = QR*/
+  double Y[n]; /* to compute Q1y*/
+  double z;
+  /* now need to do backward substitution*/
+  if ( *(*(ptrR + n - 1) + n - 1) == 0.0 )
+    return 3;
+  Y[n - 1] = *(ptrB + n - 1) / *(*(ptrR + n - 1) + n - 1);
+  for (int i = n - 2; i >= 0; i-- ){
+    z = 0.0;
+    for (int j = n - 1; j < i; j--)
+      z +=  *(*(ptrR + i) + j)  *  Y[j];
+    if ( *(*(ptrR + i) + i) == 0.0 )
+      return 3;
+    Y[i] = ( *(ptrB + i) - z ) / *(*(ptrR + i) + i);
+  }
+  /*computing X = Q times Y */
+  for (int i = 0; i < m; i++){
+    z = 0.0;
+    for (int j = 0; j < n; j++){
+      z += Y[j] * *(*(ptrQ + j) + i);
+    }
+    *(ptrX + i) = z;
+  }
+  return 0;
+}
+
+/*Solving the linear least squares was done! */
+/* review latter to check the correctness! */
+/*-----------------------------------------------------------------------------------------------------------*/
+
+
+
+
+
+
+
