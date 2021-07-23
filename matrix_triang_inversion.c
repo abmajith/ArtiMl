@@ -1,45 +1,59 @@
 #include <math.h> /*i am using sqrt function, so its needed */
 
-/* Given non singular upper trianglular square matrix m by m, find I */
+/* Given non singular upper trianglular square matrix m by m, find Inverse */
 /* By Backward substitution method */
 /* note this one can lead severe numerical approximation inaccuracy, be caution with it!
  * its not because the code is badly written, its the draw back of backward substituion method which involves 
  * sequences of many division operation*/
-void NSing_UpTriag_Mat_Inv_Backsub_Mthd_Db(double **ptrR, double **ptrIR, int m){
+int NSing_UpTriag_Mat_Inv_Backsub_Mthd_Db(double **ptrR, double **ptrIR, int m){
   double det = 1.0;
   for (int i = 0; i < m; i++) /* determinant of the upper triangular matrix is computed */
     det *= *(*(ptrR + i) + i);
+  if (det == 0.0)
+    return 1; /* indicating that the given matrix is not a upper triangular non-singular matrix*/
   for (int i = 0; i < m; i++) /* diagonal of inverse of R matrix is computed */
-    *(*(ptrIR + i) + i) = *(*(ptrR + i) + i)  / det;
+    *(*(ptrIR + i) + i) = 1.0 / *(*(ptrR + i) + i);
   double init;
   /* backward substitution method */
-  for (int z = m - 1; z > 0; z --) /* computing the zth row value */
-    for (int i = z - 1; i >= 0; i--){ /* computing inverse of zth row and i the column value */
+  for (int i = m - 2; i >= 0; i--) /* computing the ith row value */
+    for (int j = m - 1; j > 0; j--){ /* computing inverse of ith row and jth column value */
       init = 0.0;
-      for (int j = i + 1; j < z; j++)
-        init += *(*(ptrR + j ) + i ) * *(*(ptrIR + z) + j);
+      for (int z = i + 1; z < m; z++)
+        init += *(*(ptrR + z ) + i ) * *(*(ptrIR + j) + z);
       *(*(ptrIR + z) + i) = 0.0 - (double) (init / *(*(ptrR + i) + i);
-    } /* This block is checked once, check another time later*/
-  return;
+    } /* This block is double checked */
+  return 0;
 }
 
-void NSing_UpTriag_Mat_Inv_Backsub_Mthd_Fl(float **ptrR, float **ptrIR, int m){
+int NSing_UpTriag_Mat_Inv_Backsub_Mthd_Fl(float **ptrR, float **ptrIR, int m){
   float det = 1.0;
   for (int i = 0; i < m; i++) /* determinant of the upper triangular matrix is computed */
     det *= *(*(ptrR + i) + i);
+  if (det == 0.0)
+    return 1; /* indicating that the given matrix is not a upper triangular non-singular matrix*/
   for (int i = 0; i < m; i++) /* diagonal of inverse of R matrix is computed */
-    *(*(ptrIR + i) + i) = *(*(ptrR + i) + i)  / det;
+    *(*(ptrIR + i) + i) = 1.0 / *(*(ptrR + i) + i);
   float init;
   /* backward substitution method */
-  for (int z = m - 1; z > 0; z --) /* computing the zth row value */
-    for (int i = z - 1; i >= 0; i--){ /* computing inverse of zth row and i the column value */
+  for (int i = m - 2; i >= 0; i--) /* computing the ith row value */
+    for (int j = m - 1; j > 0; j--){ /* computing inverse of ith row and jth column value */
       init = 0.0;
-      for (int j = i + 1; j < z; j++)
-        init += *(*(ptrR + j ) + i ) * *(*(ptrIR + z) + j);
+      for (int z = i + 1; z < m; z++)
+        init += *(*(ptrR + z ) + i ) * *(*(ptrIR + j) + z);
       *(*(ptrIR + z) + i) = 0.0 - (float) (init / *(*(ptrR + i) + i);
-    } /* This block is checked once, check another time later*/
-  return;
+    } /* This block is double checked */
+  return 0;
 }
+
+
+
+
+
+
+
+
+/* need to document the algorithm properly later only check, otherwise you going to waste too much time in this checking*/
+
 
 /* hear we will write more extensive, stable adjoint method rather than backward substitution method to get better numerical stability!*/
 void NSing_UpTriag_Mat_Inv_Adj_Abdul_Mthd_Db(double **ptrR, double **ptrIR, int m){

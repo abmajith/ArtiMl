@@ -28,11 +28,11 @@
 
 
 /*Matrix multiplication C = A * b where  */
-/*A has n cross m and B is m cross p, so C should hold n cross p */
+/*A has n by m and B is m by p, so C should hold n by p */
 void Mat_Mul_Db(double  **ptrA, double **ptrB, double **ptrC, int n, int m, int p){
-  /* ptrA is the pointer to pointers of n arrays, each arrays has the size of m*/
-  /* ptrB is the pointer to pointers of m arrays, each arrays has the size of p*/
-  /* ptrB is the pointer to pointers of n arrays, each arrays has the size of p*/
+  /* ptrA is the pointer to pointers of n arrays, each arrays has size m*/
+  /* ptrB is the pointer to pointers of m arrays, each arrays has size p*/
+  /* ptrB is the pointer to pointers of n arrays, each arrays has size p*/
   /*cij = sumation over all k  aik * bkj */
   double init;
   int i,j,k;
@@ -100,7 +100,7 @@ void Mat_Mul_Ln(long  **ptrA, long **ptrB, long **ptrC, int n, int m, int p){
 
 
 /* Diagnonal multiplication*/
-/* multiplication of diagonal elements for the given m cross m matrix*/
+/* multiplication of diagonal elements of the given m by m matrix*/
 int Mat_Daig_Mul_Int(int **ptrA, int m){
   /* ptrA is the pointer to pointers of m arrays, each arrays has the size m */
   int d = 1;
@@ -143,7 +143,7 @@ long Mat_Daig_Mul_Ln(long **ptrA, int m){
 
 
 /* Matrix Trasnpose */
-/* given a matrix A of size m cross n transpose A^T*/
+/* given a matrix A of size m by n transpose A^T*/
 void Mat_Trans_Db(double **ptrA, double **ptrB, int m, int n){
   /* ptrA is the pointer to pointers of m arrays, each arrays has size n */
   /* ptrB is the pointer to pointers of n arrays, each arrays has size m */
