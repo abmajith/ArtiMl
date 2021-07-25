@@ -1,5 +1,5 @@
 #include <math.h> /*i am using sqrt function, so its needed */
-
+#include <stdlib.h> /* for memory allocation and free the used memory to reuse!*/
 
 
 /* Square of Norm Two*/
@@ -45,7 +45,7 @@ long Sq_Normtwo_Ln(long *col, int m){
 
 
 
-/* here the pointer to pointer of a matrix storage method*/
+/* here the pointer to pointer of storage method*/
 /* n by m matrix*/
 /*ptrA1 ptrA1 ptrA2 ..... prAm */
 /*a11    a12   a13         a1m */
@@ -57,7 +57,7 @@ long Sq_Normtwo_Ln(long *col, int m){
 
 /*House Holder Reflection*/
 /* Iteration of House holder reflection on the kth column*/
-int HHdRl_Sqmat_Itr_Db(double **ptrR, int m, int k1 ){ /* R is the matrix of m cross m, and relect on the ptrRk1 th array*/
+int HHdRl_Sqmat_Itr_Db(double **ptrR, int m, int k1){ /* R is the matrix of m by m, and relect on the ptrRk1 th array*/
   /*k1 should be non zero positive value */
   /*ptrR is the pointer to pointers of m arrays, each array has size m */
   if ( k1 >= m || k1 < 1 ) /* if k1 is less then 1 or greater than or equal to m then nothing to do */
@@ -83,57 +83,129 @@ int HHdRl_Sqmat_Itr_Db(double **ptrR, int m, int k1 ){ /* R is the matrix of m c
 
   double nf; /* normalization factor to compute Q for the len by len submatrix*/
   nf = sigma - alpha * pivot;
-  double Q[len][len], BR[len][len]; /* to store the rotated submatrix of R for making the k+1K+2K..m to zero */
+  double **ptrQ;
+  ptrQ = (double **) malloc(len * sizeof(double*));
+  for (int i = 0; i < len; i++)
+    *(ptrQ+i) = (double *) malloc(len * sizeof(double));
 
   /*Q = Identity matrix len by  len - (1over nf ) outer  product of u1 and u1T */
-  Q[0][0] = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
+  **ptrQ = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
   for (int i = 1; i < len; i++) /*filling diagonal element */
-    Q[i][i] = 1.0 - (  *(*(ptrR + k) + k + i)   *  *(*(ptrR + k) + k + i) ) / nf;
+    *(*(ptrQ + i) + i) = 1.0 - (  *(*(ptrR + k) + k + i)   *  *(*(ptrR + k) + k + i) ) / nf;
   for (int i = 1; i < len; i++) /* filling 0th column and 0th row*/
-    Q[i][0] = Q[0][i] =  0.0 - (  ( pivot - alpha )  *  *(*(ptrR + k) + k + i) ) / nf;
-  for (int i = 1; i < len; i++) 
+    *(*ptrQ + i) = **(ptrQ + i) =  0.0 - (  ( pivot - alpha )  *  *(*(ptrR + k) + k + i) ) / nf;
+  for (int i = 1; i < len; i++)
     for (int j = 1; j < i; j++){ /* limit is i, because we are dealing with symmetric matrix */
-      Q[j][i] = Q[i][j] = 0.0 - (  *(*(ptrR + k) + k + i)  *   *(*(ptrR + k) + k + j) ) / nf;
+      *(*(ptrQ + j) + i) = *(*(ptrQ + i) + j) = 0.0 - (  *(*(ptrR + k) + k + i)  *   *(*(ptrR + k) + k + j) ) / nf;
     } /* outer product of u1 and u1T is computed and stored in matrix Q*/
   /* Note Q is the symmetric matrix, you can reduce the computation space: try later*/
 
+  double **ptrBR;
+  ptrBR = (double **) malloc(len * sizeof(double*));
+  for (int i = 0; i < len; i++)
+    *(ptrBR+i) = (double *) malloc(len * sizeof(double));
+
+  for (int i = 0; i < len; i++)
+      for (int j = 0; j < len; j++){
+        init = 0.0;
+        for (int z = 0; z < len; z++)
+          init +=  *(*(ptrQ + z) + i)  * *(*(ptrR + j + k) + z + k);
+        *(*(ptrBR + j ) + i ) = init;
+      } /* bottom right of new R is computed*/
+
+  for (int i = 0; i < len; i++)
+    for (int j = 0; j < len; j++)
+      *(*(ptrR + j + k) + i + k) = *(*(ptrBR + j ) + i ); /*copying the new BR of R to existing R (memory) */
+
+  for (int i = 0; i < len; i++)
+    free( *(ptrBR + i) );
+  free(ptrBR);
+
+  /* now we have to compute the new R Bottom left submatrix*/
+    /* if k is zero, we dont have to do so*/
+  if ( k != 0)
+  {
+    /*let compute, BL = Q * BLR */
+    double **ptrBL;
+    ptrBL = (double **) malloc( (m - len) * sizeof(double*));
+    for (int i = 0; i < (m - len); i++)
+      *(ptrBL+i) = (double *) malloc(len * sizeof(double));
+
+    for (int i = 0; i < len; i++)
+      for (int j = 0; j < (m - len); j++){
+        init = 0.0;
+        for (int z = 0; z < len; z++)
+          init += *(*(ptrQ + z) + i)    * *(*(ptrR + j) + z + k);
+        *(*(prrBL + j) +i ) = init;
+      } /* Bottom left of new R is computed*/
+
+    for (int i = 0; i < len; i++)
+      for (int j = 0; j < (m - len); j++)
+        *(*(ptrR + j) + i + k) = *(*(ptrBL + j) + i); /*copying the new BL of R to exisitng R (memory) */
+
+    for (int i = 0; i < (m - len); i++)
+      free( *(ptrBL + i) );
+    free(ptrBL);
+  }
+
+  for (int i= 0; i < len; i++)
+    free( *(ptrQ + i ) );
+  free(ptrQ);
+  return 0;
+}
+
+
+/* some old code */
+/*   double Q[len][len], BR[len][len];  to store the rotated submatrix of R for making the k+1K+2K..m to zero */
+
+  /*Q = Identity matrix len by  len - (1over nf ) outer  product of u1 and u1T */
+/*   Q[0][0] = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf; */
+/*   for (int i = 1; i < len; i++) filling diagonal element */
+/*     Q[i][i] = 1.0 - (  *(*(ptrR + k) + k + i)   *  *(*(ptrR + k) + k + i) ) / nf; */
+/*  for (int i = 1; i < len; i++)  filling 0th column and 0th row*/
+/*    Q[i][0] = Q[0][i] =  0.0 - (  ( pivot - alpha )  *  *(*(ptrR + k) + k + i) ) / nf; */
+/*  for (int i = 1; i < len; i++) */
+/*    for (int j = 1; j < i; j++){  limit is i, because we are dealing with symmetric matrix */
+/*      Q[j][i] = Q[i][j] = 0.0 - (  *(*(ptrR + k) + k + i)  *   *(*(ptrR + k) + k + j) ) / nf; */
+/*    }  outer product of u1 and u1T is computed and stored in matrix Q*/
+  /* Note Q is the symmetric matrix, you can reduce the computation space: try later*/
 
   /* Rnew = Q'R = [I,zero; zero, Q ] * R ([TLR, TRR; BLR, BRR]) = [TLR, TRR; Q*BLR, Q* BRR] */
   /*Q is len by len size, BRR is len by len size, BLR is len by m-len size, TRR is m-len by len size and TLR is m-len by m-len size */
   /* block matrix multiplication scheme*/
   /* let compute, BR = Q * BRR */
-  for (int i = 0; i < len; i++)
+/*  for (int i = 0; i < len; i++)
       for (int j = 0; j < len; j++){
         init = 0.0;
         for (int z = 0; z < len; z++)
           init += Q[i][z] * *(*(ptrR + j + k) + z + k);
         BR[i][j] = init;
-      } /* bottom right of new R is computed*/
+      }  bottom right of new R is computed*/
 
-  for (int i = 0; i < len; i++)
+/*  for (int i = 0; i < len; i++)
     for (int j = 0; j < len; j++)
-      *(*(ptrR + j + k) + i + k) = BR[i][j]; /*copying the new BR of R to existing R (memory) */
+      *(*(ptrR + j + k) + i + k) = BR[i][j]; copying the new BR of R to existing R (memory) */
 
     /* now we have to compute the new R Bottom left submatrix*/
     /* if k is zero, we dont have to so*/
-  if ( k != 0)
-  {
+/*  if ( k != 0)
+  { */
     /*let compute, BL = Q * BLR */
-    double BL[len][m - len];
+/*    double BL[len][m - len];
     for (int i = 0; i < len ; i++)
       for (int j = 0; j < (m - len); j++){
         init = 0.0;
         for (int z = 0; z < len; z++)
           init += Q[i][z] * *(*(ptrR + j) + z + k);
         BL[i][j] = init;
-      } /* Bottom left of new R is computed*/
-    for (int i = 0; i < len; i++)
+      }  Bottom left of new R is computed*/
+/*    for (int i = 0; i < len; i++)
       for (int j = 0; j < (m - len); j++)
-        *(*(ptrR + j) + i + k) = BL[i][j]; /*copying the new BL of R to exisitng R (memory) */
-  }
-  return 0; /* indicating that succesfully computed!*/
+        *(*(ptrR + j) + i + k) = BL[i][j]; copying the new BL of R to exisitng R (memory) */
+/*  }
+  return 0;  indicating that succesfully computed!*/
 
-}/* This code is double checked!*/
+/* } This code was double checked!*/
 
 
 
@@ -166,52 +238,74 @@ int HHdRl_Sqmat_Itr_Fl(float **ptrR, int m, int k1 ){ /* R is the matrix of m cr
 
   float nf; /* normalization factor to compute Q for the len by len submatrix*/
   nf = sigma - alpha * pivot;
-  float Q[len][len], BR[len][len]; /* to store the rotated submatrix of R for making the k+1K+2K..m to zero */
+  double **ptrQ;
+  ptrQ = (float **) malloc(len * sizeof(float*));
+  for (int i = 0; i < len; i++)
+    *(ptrQ+i) = (float *) malloc(len * sizeof(float));
 
   /*Q = Identity matrix len by  len - (1over nf ) outer  product of u1 and u1T */
-  Q[0][0] = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
+  **ptrQ = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
   for (int i = 1; i < len; i++) /*filling diagonal element */
-    Q[i][i] = 1.0 - (  *(*(ptrR + k) + k + i)   *  *(*(ptrR + k) + k + i) ) / nf;
+    *(*(ptrQ + i) + i) = 1.0 - (  *(*(ptrR + k) + k + i)   *  *(*(ptrR + k) + k + i) ) / nf;
   for (int i = 1; i < len; i++) /* filling 0th column and 0th row*/
-    Q[i][0] = Q[0][i] =  0.0 - (  ( pivot - alpha )  *  *(*(ptrR + k) + k + i) ) / nf;
+    *(*ptrQ + i) = **(ptrQ + i) =  0.0 - (  ( pivot - alpha )  *  *(*(ptrR + k) + k + i) ) / nf;
   for (int i = 1; i < len; i++)
     for (int j = 1; j < i; j++){ /* limit is i, because we are dealing with symmetric matrix */
-      Q[j][i] = Q[i][j] = 0.0 - (  *(*(ptrR + k) + k + i)  *   *(*(ptrR + k) + k + j) ) / nf;
+      *(*(ptrQ + j) + i) = *(*(ptrQ + i) + j) = 0.0 - (  *(*(ptrR + k) + k + i)  *   *(*(ptrR + k) + k + j) ) / nf;
     } /* outer product of u1 and u1T is computed and stored in matrix Q*/
   /* Note Q is the symmetric matrix, you can reduce the computation space: try later*/
 
-  /* Rnew = Q'R = [I,zero; zero, Q ] * R ([TLR, TRR; BLR, BRR]) = [TLR, TRR; Q*BLR, Q* BRR] */
-  /*Q is len by len size, BRR is len by len size, BLR is len by m-len size, TRR is m-len by len size and TLR is m-len by m-len size */
-  /* block matrix multiplication scheme*/
-  /* let compute, BR = Q * BRR */
+  double **ptrBR;
+  ptrBR = (float **) malloc(len * sizeof(float*));
+  for (int i = 0; i < len; i++)
+    *(ptrBR+i) = (float *) malloc(len * sizeof(float));
+
   for (int i = 0; i < len; i++)
       for (int j = 0; j < len; j++){
         init = 0.0;
         for (int z = 0; z < len; z++)
-          init += Q[i][z] * *(*(ptrR + j + k) + z + k);
-        BR[i][j] = init;
+          init +=  *(*(ptrQ + z) + i)  * *(*(ptrR + j + k) + z + k);
+        *(*(ptrBR + j ) + i ) = init;
       } /* bottom right of new R is computed*/
+
   for (int i = 0; i < len; i++)
     for (int j = 0; j < len; j++)
-      *(*(ptrR + j + k) + i + k) = BR[i][j]; /*copying the new BR of R to existing R (memory) */
+      *(*(ptrR + j + k) + i + k) = *(*(ptrBR + j ) + i ); /*copying the new BR of R to existing R (memory) */
 
-    /* now we have to compute the new R Bottom left submatrix*/
-    /* if k is zero, we dont have to so*/
+  for (int i = 0; i < len; i++)
+    free( *(ptrBR + i) );
+  free(ptrBR);
+
+  /* now we have to compute the new R Bottom left submatrix*/
+    /* if k is zero, we dont have to do so*/
   if ( k != 0)
   {
     /*let compute, BL = Q * BLR */
-    float BL[len][m - len];
-    for (int i = 0; i < len ; i++)
+    double **ptrBL;
+    ptrBL = (float **) malloc( (m - len) * sizeof(float*));
+    for (int i = 0; i < (m - len); i++)
+      *(ptrBL+i) = (float *) malloc(len * sizeof(float));
+
+    for (int i = 0; i < len; i++)
       for (int j = 0; j < (m - len); j++){
         init = 0.0;
         for (int z = 0; z < len; z++)
-          init += Q[i][z] * *(*(ptrR + j) + z + k);
-        BL[i][j] = init;
+          init += *(*(ptrQ + z) + i)    * *(*(ptrR + j) + z + k);
+        *(*(prrBL + j) +i ) = init;
       } /* Bottom left of new R is computed*/
+
     for (int i = 0; i < len; i++)
       for (int j = 0; j < (m - len); j++)
-        *(*(ptrR + j) + i + k) = BL[i][j]; /*copying the new BL of R to exisitng R (memory) */
+        *(*(ptrR + j) + i + k) = *(*(ptrBL + j) + i); /*copying the new BL of R to exisitng R (memory) */
+
+    for (int i = 0; i < (m - len); i++)
+      free( *(ptrBL + i) );
+    free(ptrBL);
   }
+
+  for (int i= 0; i < len; i++)
+    free( *(ptrQ + i ) );
+  free(ptrQ);
   return 0;
 }/* This code is double checked!*/
 /* the above code is same as before, but for float type!*/
@@ -228,7 +322,7 @@ int HHdRl_Sqmat_Itr_Fl(float **ptrR, int m, int k1 ){ /* R is the matrix of m cr
 /* size of Q is m by m*/
 
 
-/* need to review */
+/* checked once */
 int QR_HH_Itr_Db (double **ptrA, double **ptrQ, double **ptrR, int m, int n, int k1){
   /* ptrA is the pointer to pointer of n arrays, each arrays has size m */
   /* ptrQ is the pointer to pointer of m arrays, each arrays has size m */
@@ -306,18 +400,22 @@ int QR_HH_Itr_Db (double **ptrA, double **ptrQ, double **ptrR, int m, int n, int
       alpha = 0.0 - alpha;
 
     nf = sigma - alpha * pivot;
-    double Q[len][len]; /* to store the rotated submatrix of R for making the k+1K+2K..m to zero */
-    /* computing the Q matrix first Ilen*len - v outer product v / nf*/
-    Q[0][0] = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
+    double **ptrq;
+    ptrq = (double **) malloc(len * sizeof(double*));
+    for (int i = 0; i < len; i++)
+      *(ptrq+i) = (double *) malloc(len * sizeof(double));
+
+    /*Q = Identity matrix len by  len - (1over nf ) outer  product of u1 and u1T */
+    **ptrq = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
     for (int i = 1; i < len; i++) /*filling diagonal element */
-      Q[i][i] = 1.0 - (  *(*(ptrR + k) + k + i)   *  *(*(ptrR + k) + k + i) ) / nf;
+      *(*(ptrq + i) + i) = 1.0 - (  *(*(ptrR + k) + k + i)   *  *(*(ptrR + k) + k + i) ) / nf;
     for (int i = 1; i < len; i++) /* filling 0th column and 0th row*/
-      Q[i][0] = Q[0][i] =  0.0 - (  ( pivot - alpha )  *  *(*(ptrR + k) + k + i) ) / nf;
+      *(*ptrq + i) = **(ptrq + i) =  0.0 - (  ( pivot - alpha )  *  *(*(ptrR + k) + k + i) ) / nf;
     for (int i = 1; i < len; i++)
       for (int j = 1; j < i; j++){ /* limit is i, because we are dealing with symmetric matrix */
-        Q[j][i] = Q[i][j] = 0.0 - (  *(*(ptrR + k) + k + i)  *   *(*(ptrR + k) + k + j) ) / nf;
+        *(*(ptrq + j) + i) = *(*(ptrq + i) + j) = 0.0 - (  *(*(ptrR + k) + k + i)  *   *(*(ptrR + k) + k + j) ) / nf;
       } /* outer product of u1 and u1T is computed and stored in matrix Q*/
-      /* Note Q is the symmetric matrix, you can reduce the computation space: try later*/
+    /* Note Q is the symmetric matrix, you can reduce the computation space: try later*/
 
     /* Q' = [I, zero; zero, Q]*/
     /* here I is m -len by m - len */
@@ -328,32 +426,51 @@ int QR_HH_Itr_Db (double **ptrA, double **ptrQ, double **ptrR, int m, int n, int
     /* bQ is m - len by m (i.e k by m), store bQ in QTR */
     /* dQ is len by len, store dQ in QBR */
     /* block multiplication */
-    double QTR[k][len];
-    double QBR[len][len];
+
+    double **ptrQTR;
+    ptrQTR = (double **) malloc(len * sizeof(double*));
+    for (int i = 0; i < len; i++)
+      *(ptrQTR+i) = (double *) malloc(k * sizeof(double));
+
     /* computing top right block */
     for (int i = 0; i < k; i++)
       for (int j = 0; j < len; j++){
         init = 0.0;
         for (int z = 0; z < len; z++)
-          init += *(*(ptrQ + k + z ) + j )   *  Q[z][j];
-        QTR[i][j] = init;
+          init += *(*(ptrQ + k + z ) + j )  *  *(*(ptrq + j) + z);
+        *(*(ptrQTR + j ) + i) = init;
         }
-      /* computing bottom right block */
+
+    /* copying the computed blocks to the memory of ptrQ */
+    for (int i = 0; i < k; i++)
+      for (int j = 0; j < len; j++)
+        *(*(ptrQ + k + j ) + i) = *(*(ptrQTR + j)+ i);
+    for (int i = 0; i < len; i++)
+      free( *(ptrQTR + i) );
+    free(ptrQTR);
+
+    double **ptrQBR;
+    ptrQTR = (double **) malloc(len * sizeof(double*));
+    for (int i = 0; i < len; i++)
+      *(ptrQBR + i) = (double *) malloc(len * sizeof(double));
+
+
+    /* computing bottom right block */
     for (int i = 0; i < len; i++)
       for (int j = 0; j < len; j++){
         init = 0.0;
         for (int z = 0; z < len; z++)
-          init +=  *(*(ptrQ + k + z ) + j + k )    * Q[z][j];
-        QBR[i][j] = init;
+          init +=  *(*(ptrQ + k + z ) + j + k )    * *(*(ptrq + j) + z);
+        *(*(ptrQBR + j) + i) = init;
       }
 
       /* copying the computed blocks to the memory of ptrQ */
-      for (int i = 0; i < k; i++)
-        for (int j = 0; j < len; j++)
-          *(*(ptrQ + k + j ) + i) = QTR[i][j];
       for (int i = 0; i < len; i++)
         for (int j = 0; j < len; j++)
-          *(*(ptrQ + k + j ) + i + k ) = QBR[i][j];
+          *(*(ptrQ + k + j ) + i + k ) = *(*(ptrQBR + j) + i);
+      for (int i = 0; i < len; i++)
+        free( *(ptrQBR + i) );
+      free(ptrQBR);
       /*Matrix Q is updated properly, it is double checked! */
 
       /* now updating R*/
@@ -364,35 +481,57 @@ int QR_HH_Itr_Db (double **ptrA, double **ptrQ, double **ptrR, int m, int n, int
       /* a is m - len by m - len, c is len by m - len, b is n - m + len by m - len and d is len by n - m + len*/
       /* where Qc is len by m - len, store Qc in BLR*/
       /* Qd is len by n - m + len, store Qd in BRR*/
-      double BLR[len][k];
-      double BRR[len][n-k];         
+
+      double **ptrBLR;
+      ptrBLR = (double **) malloc(k * sizeof(double*));
+      for (int i = 0; i < k; i++)
+        *(ptrBLR + i) = (double *) malloc(len * sizeof(double));
+
       /* calculating the BLR */
       for (int i = 0; i < len; i++)
         for (int j = 0; j < k; j++){
           init = 0.0;
           for (int z = 0; z < len; z++)
-            init += Q[i][z] * *(*(ptrR + j) + k + z);
-          BLR[i][j] = init;
+            init += *(*(ptrq + z) + i) * *(*(ptrR + j) + k + z);
+          *(*(ptrBLR + j) + i) = init;
         }
+      /* copying the computed BLR to R*/
+      for (int i = 0; i < len; i++)
+        for (int j = 0; j < k; j++)
+          *(*(ptrR + j) + k + i) = *(*(ptrBLR + j) + i);
+      for (int i = 0; i < k; i++)
+        free( *(ptrBLR + i) );
+      free(ptrBLR);
+
       /* calculating BRR */
+      double **ptrBRR;
+      ptrBRR = (double **) malloc( (n-k) * sizeof(double*));
+      for (int i = 0; i < (n-k); i++)
+        *(ptrBRR + i) = (double *) malloc(len * sizeof(double));
+
       for (int i = 0; i < len; i++)
         for (int j = 0; j < (n-k) j++){
           init = 0.0;
           for (int z = 0; z < len; z++)
-            init += Q[i][z] * *(*(ptrR + k + j) + k + z);
-          BRR[i][j] = init;
+            init += *(*(ptrq + z) + i)  * *(*(ptrR + k + j) + k + z);
+          *(*(ptrBRR + j) + i) = init;
         }
       /* copying the computed blocks to the memory of ptrR */
       for (int i = 0; i < len; i++)
-        for (int j = 0; j < k; j++)
-          *(*(ptrR + j) + k + i) = BLR[i][j];
-      for (int i = 0; i < len; i++)
         for (int j = 0; j < (n-k); j++)
-          *(*(ptrR + k + j) + k + i) = BRR[i][j];
+          *(*(ptrR + k + j) + k + i) = *(*(ptrBRR + j) + i);
       /* matrix R is updated properly, it is double checked!*/
+      for (int i = 0; i < (n -k); i++)
+        free( *(ptrBRR + i) );
+      free(ptrBRR);
+      for (int i = 0; i < len; i++)
+        free (*(ptrq+i) );
+      free(ptrq);
   }
   return 0;
 }
+
+
 
 int QR_HH_Itr_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n, int k1){
   /* ptrA is the pointer to pointer of n arrays, each arrays has size m */
@@ -469,18 +608,25 @@ int QR_HH_Itr_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n, int k1
       alpha = 0.0 - alpha;
 
     nf = sigma - alpha * pivot;
-    float Q[len][len];
+    float **ptrq;
     /* computing the Q matrix first Ilen*len - v outer product v / nf*/
-    Q[0][0] = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
+    ptrq = (float **) malloc(len * sizeof(float*));
+    for (int i = 0; i < len; i++)
+      *(ptrq+i) = (float *) malloc(len * sizeof(float));
+
+    /*Q = Identity matrix len by  len - (1over nf ) outer  product of u1 and u1T */
+    **ptrq = 1.0 - (  ( pivot - alpha )  *  ( pivot - alpha ) ) / nf;
     for (int i = 1; i < len; i++) /*filling diagonal element */
-      Q[i][i] = 1.0 - (  *(*(ptrR + k) + k + i)   *  *(*(ptrR + k) + k + i) ) / nf;
+      *(*(ptrq + i) + i) = 1.0 - (  *(*(ptrR + k) + k + i)   *  *(*(ptrR + k) + k + i) ) / nf;
     for (int i = 1; i < len; i++) /* filling 0th column and 0th row*/
-      Q[i][0] = Q[0][i] =  0.0 - (  ( pivot - alpha )  *  *(*(ptrR + k) + k + i) ) / nf;
+      *(*ptrq + i) = **(ptrq + i) =  0.0 - (  ( pivot - alpha )  *  *(*(ptrR + k) + k + i) ) / nf;
     for (int i = 1; i < len; i++)
       for (int j = 1; j < i; j++){ /* limit is i, because we are dealing with symmetric matrix */
-        Q[j][i] = Q[i][j] = 0.0 - (  *(*(ptrR + k) + k + i)  *   *(*(ptrR + k) + k + j) ) / nf;
+        *(*(ptrq + j) + i) = *(*(ptrq + i) + j) = 0.0 - (  *(*(ptrR + k) + k + i)  *   *(*(ptrR + k) + k + j) ) / nf;
       } /* outer product of u1 and u1T is computed and stored in matrix Q*/
-      /* Note Q is the symmetric matrix, you can reduce the computation space: try later*/
+    /* Note Q is the symmetric matrix, you can reduce the computation space: try later*/
+
+
 
     /* Q' = [I, zero; zero, Q]*/
     /* here I is m -len by m - len */
@@ -491,33 +637,51 @@ int QR_HH_Itr_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n, int k1
     /* bQ is m - len by m (i.e k by m), store bQ in QTR */
     /* dQ is len by len, store dQ in QBR */
     /* block multiplication */
-    float QTR[k][len];
-    float QBR[len][len];
+
+    float **ptrQTR;
+    ptrQTR = (float **) malloc(len * sizeof(float*));
+    for (int i = 0; i < len; i++)
+      *(ptrQTR+i) = (float *) malloc(k * sizeof(float));
+
     /* computing top right block */
     for (int i = 0; i < k; i++)
       for (int j = 0; j < len; j++){
         init = 0.0;
         for (int z = 0; z < len; z++)
-          init += *(*(ptrQ + k + z ) + j )   *  Q[z][j];
-        QTR[i][j] = init;
+          init += *(*(ptrQ + k + z ) + j )  *  *(*(ptrq + j) + z);
+        *(*(ptrQTR + j ) + i) = init;
         }
 
-      /* computing bottom right block */
+    /* copying the computed blocks to the memory of ptrQ */
+    for (int i = 0; i < k; i++)
+      for (int j = 0; j < len; j++)
+        *(*(ptrQ + k + j ) + i) = *(*(ptrQTR + j)+ i);
+    for (int i = 0; i < len; i++)
+      free( *(ptrQTR + i) );
+    free(ptrQTR);
+
+    float **ptrQBR;
+    ptrQTR = (float **) malloc(len * sizeof(float*));
+    for (int i = 0; i < len; i++)
+      *(ptrQBR + i) = (float *) malloc(len * sizeof(float));
+
+
+    /* computing bottom right block */
     for (int i = 0; i < len; i++)
       for (int j = 0; j < len; j++){
         init = 0.0;
         for (int z = 0; z < len; z++)
-          init +=  *(*(ptrQ + k + z ) + j + k )    * Q[z][j];
-        QBR[i][j] = init;
+          init +=  *(*(ptrQ + k + z ) + j + k )    * *(*(ptrq + j) + z);
+        *(*(ptrQBR + j) + i) = init;
       }
 
       /* copying the computed blocks to the memory of ptrQ */
-      for (int i = 0; i < k; i++)
-        for (int j = 0; j < len; j++)
-          *(*(ptrQ + k + j ) + i) = QTR[i][j];
       for (int i = 0; i < len; i++)
         for (int j = 0; j < len; j++)
-          *(*(ptrQ + k + j ) + i + k ) = QBR[i][j];
+          *(*(ptrQ + k + j ) + i + k ) = *(*(ptrQBR + j) + i);
+      for (int i = 0; i < len; i++)
+        free( *(ptrQBR + i) );
+      free(ptrQBR);
       /*Matrix Q is updated properly, it is double checked! */
 
 
@@ -529,32 +693,52 @@ int QR_HH_Itr_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n, int k1
       /* a is m - len by m - len, c is len by m - len, b is n - m + len by m - len and d is len by n - m + len*/
       /* where Qc is len by m - len, store Qc in BLR*/
       /* Qd is len by n - m + len, store Qd in BRR*/
-      float BLR[len][k];
-      float BRR[len][n-k];
+      float **ptrBLR;
+      ptrBLR = (float **) malloc(k * sizeof(float*));
+      for (int i = 0; i < k; i++)
+        *(ptrBLR + i) = (float *) malloc(len * sizeof(float));
+
       /* calculating the BLR */
       for (int i = 0; i < len; i++)
         for (int j = 0; j < k; j++){
           init = 0.0;
           for (int z = 0; z < len; z++)
-            init += Q[i][z] * *(*(ptrR + j) + k + z);
-          BLR[i][j] = init;
+            init += *(*(ptrq + z) + i) * *(*(ptrR + j) + k + z);
+          *(*(ptrBLR + j) + i) = init;
         }
+      /* copying the computed BLR to R*/
+      for (int i = 0; i < len; i++)
+        for (int j = 0; j < k; j++)
+          *(*(ptrR + j) + k + i) = *(*(ptrBLR + j) + i);
+      for (int i = 0; i < k; i++)
+        free( *(ptrBLR + i) );
+      free(ptrBLR);
+
       /* calculating BRR */
+      float **ptrBRR;
+      ptrBRR = (float **) malloc( (n-k) * sizeof(float*));
+      for (int i = 0; i < (n-k); i++)
+        *(ptrBRR + i) = (float *) malloc(len * sizeof(float));
+
       for (int i = 0; i < len; i++)
         for (int j = 0; j < (n-k) j++){
           init = 0.0;
           for (int z = 0; z < len; z++)
-            init += Q[i][z] * *(*(ptrR + k + j) + k + z);
-          BRR[i][j] = init;
+            init += *(*(ptrq + z) + i)  * *(*(ptrR + k + j) + k + z);
+          *(*(ptrBRR + j) + i) = init;
         }
       /* copying the computed blocks to the memory of ptrR */
       for (int i = 0; i < len; i++)
-        for (int j = 0; j < k; j++)
-          *(*(ptrR + j) + k + i) = BLR[i][j];
-      for (int i = 0; i < len; i++)
         for (int j = 0; j < (n-k); j++)
-          *(*(ptrR + k + j) + k + i) = BRR[i][j];
+          *(*(ptrR + k + j) + k + i) = *(*(ptrBRR + j) + i);
       /* matrix R is updated properly, it is double checked!*/
+      for (int i = 0; i < (n -k); i++)
+        free( *(ptrBRR + i) );
+      free(ptrBRR);
+      for (int i = 0; i < len; i++)
+        free (*(ptrq+i) );
+      free(ptrq);
+
   }
   return 0;
 }
