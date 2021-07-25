@@ -226,7 +226,7 @@ int HHdRl_Sqmat_Itr_Fl(float **ptrR, int m, int k1 ){ /* R is the matrix of m cr
   ptr = *(ptrR + k) + k; /* address of Rk,k */
 
   float sigma, alpha; /* sigma for square of norm two, alpha for norm two*/
-  sigma = (float) Sq_Normtwo_Db(ptr, len);
+  sigma = (float) Sq_Normtwo_Fl(ptr, len);
   alpha = (float) sqrt(sigma);
   
   if (sigma == 0.0) /* in the future for stable result have to introduce some epsilon value instead of zero*/
@@ -784,7 +784,7 @@ int QR_HHdRl_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n){
   /* this QR designed for specific dimension, although modifying them is not a big deal!*/
   if (m < n)
     for (int i = 0; i < m - 1; i++ ){
-      status = QQ_HH_Itr_Db(**ptrA, **ptrQ, **ptrR, m, n, (i + 1) );
+      status = QQ_HH_Itr_Fl(**ptrA, **ptrQ, **ptrR, m, n, (i + 1) );
       if (status == 3)
         printf("Non - Singular matrix \n");
       if (status == 2)
@@ -792,7 +792,7 @@ int QR_HHdRl_Fl (float **ptrA, float **ptrQ, float **ptrR, int m, int n){
     }
   else
     for (int i = 0; i < n - 1; i++ ){
-      status = QQ_HH_Itr_Db(**ptrA, **ptrQ, **ptrR, m, n, (i + 1) );
+      status = QQ_HH_Itr_Fl(**ptrA, **ptrQ, **ptrR, m, n, (i + 1) );
       if (status == 3)
         printf("Non - Singular matrix \n");
       if (status == 2)
