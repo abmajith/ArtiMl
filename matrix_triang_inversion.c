@@ -155,7 +155,7 @@ void NSing_UpTriag_Mat_Inv_Adj_Abdul_Mthd_Db(double **ptrR, double **ptrIR, int 
        *(*(ptrIR + i) + j) = (double) pow(-1, (i + j)) * (U * IM[i-j+1]) / det;
     }
   }
-
+  return;
 }/* need to review this code but this is hell out of complex matrix inversion for the given triangular matrix form to get faster and better numerical stable solutions 
     , not using the conventional matrix  inversion!*/
 /* it is reviewed once, but not sure that this will reduce the numerical inaccuracy, since division(by a big integer) and multiplication (by real
@@ -174,16 +174,14 @@ void NSing_UpTriag_Mat_Inv_Adj_Abdul_Mthd_Fl(float **ptrR, float **ptrIR, int m)
         /* for this computation we have to take the negative of the element divided by the two nearest diagnonal entries 
          * check the matrix calculation it is correct*/
     /* rest of the element computed by newly devised algorithm, it has to be peer reviewed, i checked twice this algorithm */
-
-  double tbd, btd;
-  double TBD[m+1], BTD[m+1];/* TBD = [1,d1,d1d2,d1d2d3,...,d1d2d3...dm ]*/
+  float tbd, btd;
+  float TBD[m+1], BTD[m+1];/* TBD = [1,d1,d1d2,d1d2d3,...,d1d2d3...dm ]*/
   /*BTD = [1,dm,dmdm-1,dmdm-1dm-2,....,dmdm-1...d1]  */
   tbd = 1.0;
   btd = 1.0;
   TBD[0] = 1.0;
   BTD[0] = 1.0;
   float U,D; /* now we are dealing with elements above then second diagonal of the matrix */
-
   for (int i = 0; i < m; i++){
     tbd *= *(*(ptrR + i) + i);
     btd *= *(*(ptrR + m - 1 - i) + m - 1 - i)
@@ -191,10 +189,43 @@ void NSing_UpTriag_Mat_Inv_Adj_Abdul_Mthd_Fl(float **ptrR, float **ptrIR, int m)
     BTD[i+1] = btd; /* from bottom to top block diagonal multiplication */
   }
 
+
+  /* a11   a12 ....  a1jm1    a1jp1 ...  a1n
+ *  0    a22 ....  a2jm1    a2jp1 ... .a2n 
+ * .................................
+ * aim11 aim12     aim1jm1  aim1jp1   aim1n
+ * aip11 aip12     aip1jm1  aip1jp1   aip1n
+ * ......................................
+ * 0      0            0      0        ann*/
+
+
   for (int j = 0 ; j < m-2; j++){
     U = TBD[j]; /* top block matrix diagonal multiplication, [a11 a12 .... a1j-1; 0 a22 a23 .. a2j-1; 0 0 0 aj-1j-1] */
     for (int i = j + 2; i < m; i++){
       D = BTD[m-1-i]; /* bottom diagonal multiplication [ai+1i+1, ai+1i+2.....ai+1m; 0 ai+2i+2...ai+2m; 0 0 0 amm] */
+
+/* the cofactor of the iaij will looks as follows */
+      /* U */
+      /* a11 a12 ..... a1jm1   |   a1jp1 a1jp2 a1jp3 .....   a1m  
+       * 0   a22 ......a2jm1   |   a2jp1 a2jp2 a2jp3 .....   a2m 
+       * 0   a33 ....  a2jm1   |
+       * 0   0         ajm1jm1 |   ajm1jp1 ajm1jp2 ajm1jp3 .....   ajm1m  
+       *
+       *
+       *
+       *0 0 0 00      ajjp1    ajjp2 .........................................ajm
+       *0 0 0 0       ajp1jp1  ajp1jp2........................................ajp1m
+       *0 0 0 00        0      ajp2jp2 .......................................ajp2m
+          0 0                     0   ajp3jp3 ............................... ajp3m
+                                     
+                                     | Im[4]        
+                                     |         alpha * D * b - beta * a * D
+       *                             | aim2im2| aim2im1| aim2i  aim2ip1 aim2ip2 .......aim2m   |
+       *         0      0   0     0  |        | aim1im1| aim1i   aim1ip1 aim1ip2 ........aim1m | Db
+       *         0              0    |             0   |   0  D| aip1ip1 aip1ip2 ........aip1m |  
+       *         0              0    |             0   |   0   |    0    aip2ip2 ........aip2m |
+       *         0              0    |             0   |   0   |    0      0              amm  | */
+
 
       float IM[i-j-1+3]; /* for computing the sucessive determinant of the submatrix*/
       /* [0, D, Db, P, P1, P2,...Pl] */
@@ -225,7 +256,7 @@ void NSing_UpTriag_Mat_Inv_Adj_Abdul_Mthd_Fl(float **ptrR, float **ptrIR, int m)
        *(*(ptrIR + i) + j) = (float) pow(-1, (i + j)) * (U * IM[i-j+1]) / det;
     }
   }
-
+  return;
 }/* reviewed this code once,  but this is hell out of complex matrix inversion not using the conventional matrix  inversion! 
 not sure it increase the numerical stability*/
 
