@@ -1,7 +1,11 @@
-/* *ptrA0   a11 a12 a13 .........a1m  
-* *ptrA1    a21 a22 a23 .........a2m
-  .............
-* *ptrAend.  an1 an2 an3 .........anm */
+
+
+/*  *ptrA1 *ptrA2 ........*ptrAm */
+/*  a11   a12   a13 .........a1m  
+*   a21   a22   a23 .........a2m
+     .............
+*   an1   an2   an3 .........anm */
+/* m column and n row, matrix A is n by m*/
 
 /*b11 b12 b13 ........b1p 
  *b21 b22 b23 ........b2p
@@ -13,16 +17,15 @@
  * ...............
  * cn1 cn2 cn3 .... cnp */
 
-/* This setting (pointer of pointer to a row array) holds only for the matrix multiplication until matrix transpose the onwards 
- * each pointer from the pointer of arrays refers the column array */
+/* This setting is consistent thoughout matrix operations */
 
 
 /* For this type of matrix storage, matrix multiplication has to do by the following way */
-/* for i0ton  */
-/* for j0top  */
-/*cij=zero*/
-/* for k0tom */
-/* cij +=Aik.Bkj*/
+/* for i 0ton  */
+/*  for j 0top  */
+/*   cij=zero*/
+/*   for k0tom */
+/*     cij +=Aik.Bkj*/
 
 
 
@@ -30,18 +33,18 @@
 /*Matrix multiplication C = A * b where  */
 /*A has n by m and B is m by p, so C should hold n by p */
 void Mat_Mul_Db(double  **ptrA, double **ptrB, double **ptrC, int n, int m, int p){
-  /* ptrA is the pointer to pointers of n arrays, each arrays has size m*/
-  /* ptrB is the pointer to pointers of m arrays, each arrays has size p*/
-  /* ptrB is the pointer to pointers of n arrays, each arrays has size p*/
+  /* ptrA is the pointer to pointers of m arrays, each arrays has size n*/
+  /* ptrB is the pointer to pointers of p arrays, each arrays has size m*/
+  /* ptrC is the pointer to pointers of p arrays, each arrays has size n*/
   /*cij = sumation over all k  aik * bkj */
   double init;
   int i,j,k;
-  for (i = 0; i < n; i++){ /*you can reduce the matrix computation time by doing block matrix compuation*/
+  for (i = 0; i < n; i++){   /*you can reduce the matrix computation time by doing block matrix compuation*/
     for (j = 0; j < p; j++){
       init = 0;
       for (k = 0; k < m; k++)
-        init += *(*(ptrA + i) + k )   *  *(*(ptrB + k) + j);
-      *(*(ptrC + i) + j) = init;
+        init += *(*(ptrA + k) + i )   *  *(*(ptrB + j) + k);
+      *(*(ptrC + j) + i) = init;
     }
   }
   return; /* this function stores the matrix multiplication value in the pointer of pointer double type ptrC given as input */
@@ -50,12 +53,12 @@ void Mat_Mul_Db(double  **ptrA, double **ptrB, double **ptrC, int n, int m, int 
 void Mat_Mul_Fl(float  **ptrA, float **ptrB, float **ptrC, int n, int m, int p){
   float init;
   int i,j,k;
-  for (i = 0; i < n; i++){
+  for (i = 0; i < n; i++){   /*you can reduce the matrix computation time by doing block matrix compuation*/
     for (j = 0; j < p; j++){
       init = 0;
       for (k = 0; k < m; k++)
-        init += *(*(ptrA + i) + k )   *  *(*(ptrB + k) + j);
-      *(*(ptrC + i) + j) = init;
+        init += *(*(ptrA + k) + i )   *  *(*(ptrB + j) + k);
+      *(*(ptrC + j) + i) = init;
     }
   }
   return;
@@ -68,8 +71,8 @@ void Mat_Mul_Int(int  **ptrA, int **ptrB, int **ptrC, int n, int m, int p){
     for (j = 0; j < p; j++){
       init = 0;
       for (k = 0; k < m; k++)
-        init += *(*(ptrA + i) + k )   *  *(*(ptrB + k) + j);
-      *(*(ptrC + i) + j) = init;
+        init += *(*(ptrA + k) + i )   *  *(*(ptrB + j) + k);
+      *(*(ptrC + j) + i) = init;
     }
   }
   return;
@@ -82,8 +85,8 @@ void Mat_Mul_Ln(long  **ptrA, long **ptrB, long **ptrC, int n, int m, int p){
     for (j = 0; j < p; j++){
       init = 0;
       for (k = 0; k < m; k++)
-        init += *(*(ptrA + i) + k )   *  *(*(ptrB + k) + j);
-      *(*(ptrC + i) + j) = init;
+        init += *(*(ptrA + k) + i )   *  *(*(ptrB + j) + k);
+      *(*(ptrC + j) + i) = init;
     }
   }
   return;
@@ -94,8 +97,6 @@ void Mat_Mul_Ln(long  **ptrA, long **ptrB, long **ptrC, int n, int m, int p){
 /*------matrix multiplication function code is double checked -----------------*/
 
 /*---------------------------------------------------------------------------------------*/
-
-
 
 
 
