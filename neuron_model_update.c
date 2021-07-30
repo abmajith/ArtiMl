@@ -25,6 +25,7 @@
 /* to reduce the space we dont have to store the threshold limits for the input layer!, because there is no thereshold */
 /* ptrMt[0] -> [t1,t2,...tk0] t1 is the threshold for the node 1 in the layer 1 and so on*/
 /* ptrMt[l] -> [t1,t2,...tkl] ti the theshold for the node i in the layer l and so on*/
+/* for sigmoid function, we dont have to use any threshold but in future for reLU we might use threshold function */
 
 
 /* ptrIn is the array to the pointers */
@@ -45,7 +46,7 @@
 /* del[1] = [del1,del2,.....del[n2]] */
 
 
-int NNlayer_Logfn_input_Db(double **ptrMw[], double *ptrMt[], int lye, int *nd, double *ptrIn[], double *t, double *del[], double eta ){
+int NNlayer_Logfn_input_Db(double **ptrMw[], int lye, int *nd, double *ptrIn[], double *t, double *del[], double eta ){
 
   double net;
   double de;
@@ -57,7 +58,7 @@ int NNlayer_Logfn_input_Db(double **ptrMw[], double *ptrMt[], int lye, int *nd, 
       for (int i = 0; i < *(nd + l); i++){
         net += (double) *(*(ptrMw[l] + i) + j) *  (double) *(ptrIn[l] + i);
       }
-      *(ptrIn[l + 1] + j) = (double) 1.0 / (1.0 + (double) exp( *(ptrMt[l] + j) - net ) ); /*logistic functions */
+      *(ptrIn[l + 1] + j) = (double) 1.0 / (1.0 + (double) exp( 0.0 - net ) ); /*logistic functions */
     }
 
   /* computing the delta for each layer*/
@@ -80,7 +81,7 @@ int NNlayer_Logfn_input_Db(double **ptrMw[], double *ptrMt[], int lye, int *nd, 
 }
 
 
-int NNlayer_Logfn_input_Fl(float **ptrMw[], float *ptrMt[], int lye, int *nd, float *ptrIn[], float *t, float *del[], float eta ){
+int NNlayer_Logfn_input_Fl(float **ptrMw[], int lye, int *nd, float *ptrIn[], float *t, float *del[], float eta ){
 
   float net;
   float de;
@@ -92,7 +93,7 @@ int NNlayer_Logfn_input_Fl(float **ptrMw[], float *ptrMt[], int lye, int *nd, fl
       for (int i = 0; i < *(nd + l); i++){
         net += (float) *(*(ptrMw[l] + i) + j) *  (float) *(ptrIn[l] + i);
       }
-      *(ptrIn[l + 1] + j) = (float) 1.0 / (1.0 + (float) exp( *(ptrMt[l] + j) - net ) ); /*logistic functions */
+      *(ptrIn[l + 1] + j) = (float) 1.0 / (1.0 + (float) exp( 0.0 - net ) ); /*logistic functions */
     }
 
   /* computing the delta for each layer*/
