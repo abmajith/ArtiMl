@@ -7,3 +7,17 @@ type the commad in terminal as
 gcc -Wall -o a test_k_centroid.c kmean_clustering.c -lm
 
 Some terminal you have to explicitly ask the compiler to link the math library.
+
+
+Caution: Dont't use for larger data sets, even the simple malloc usage will tell you whether you can load your full data sets while running.
+
+
+In this folder, we have only simple (norm one) normalization of the data vectors of the data set.
+
+One can use better normalization like guassian or normal distribution type by finding mean and standanrd deviaiton of each co-ordinate point of data vector of 
+given data sets.
+
+In the latter case we had to use the 'Mahalanobis distance' instead of norm 2 distance to find the k-centroids and associated clusters
+
+Note: Mahalanobis dist: sqrt([vec(x) - mean(data)]^{T} S^{-1} [vec(x) - mean(data)]) where S is the co-variance matrix of dimension d times d,
+meand(data) an array of length d.
