@@ -21,7 +21,7 @@ int main(void){
     }
     printf("\n");
   }
-
+ // for the convinience, we scale down the input datas within the range of [-1,1] check the correponding function
   KMeanCl_Normalize_data_Db(No_Data_pts, vec_dim, data, rangeMin, rangeMax, absmax);
   for (int i = 0; i < No_Data_pts; i++){
     for (int j = 0; j < vec_dim; j++){
@@ -38,6 +38,7 @@ int main(void){
   for (int l = 0; l < 2; l++){
     NewCentroid[l] = (double *) malloc(sizeof(double) * vec_dim);
   }
+  // we randomly intialize the centroid vectors using srand and rand function
   KMeanCl_Initialize_Centroids_Db(2,vec_dim, rangeMin, rangeMax, absmax,Centroid);
   for (int l = 0; l < 2; l++){
     for (int j = 0; j < vec_dim; j++){
@@ -46,6 +47,7 @@ int main(void){
     printf("\n");
   }
   int argmin[3];
+  // we find the closest centroid vector to each data vector in the data set 
   KMeanCl_minarg_to_centroid_Db(2,vec_dim,No_Data_pts, data,Centroid,argmin);
   for (int i = 0; i < No_Data_pts; i++){
     printf("%d\n", argmin[i]);
@@ -55,6 +57,9 @@ int main(void){
     for (int l = 0; l < 2; l++){
       for (int j = 0; j < vec_dim; j++){
         printf("%f\t", *(NewCentroid[l] + j) );
+        /* dont ever forget to copy the new centroid to the old centroid, you also consider to 
+        find the deviation between the consuecutinve centroid vectors and use it to terminate the program rather than fixed number of iteration*/
+        *(Centroid[l] + j) = *(NewCentroid[l] + j);
       }
       printf("\n");
     }
