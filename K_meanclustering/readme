@@ -1,0 +1,9 @@
+In this folder you can see the files to do the k-mean clustering with an example
+
+in order to compile 
+
+type the commad in terminal as 
+
+gcc -Wall -o a test_k_centroid.c kmean_clustering.c -lm
+
+Some terminal you have to explicitly ask the compiler to link the math library.
