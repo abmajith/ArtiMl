@@ -8,6 +8,9 @@
 
 
 // Note: if the number of datas are too much, consider to use the fopen functions and process the data by chunck by chunk
+
+/* the following arugments is clear, the vec_dim represents the dimension of the data, No_data_pts represents the number of data vectors in the data set
+mean and std is for future purpose and in case if you want to normalize the querry data use this mean values of each co-ordinate of the given querry vector*/
 int Normalize_KNN_vec_data_Db_prec(int vec_dim, int No_data_pts, double *data[], double mean[], double std[]){
   if (No_data_pts <= 0){
     printf("There are no data points there to normalize, exiting the program\n");
@@ -128,6 +131,9 @@ int getargmaxfromlist(LLnode *Ary){
 }
 
 
+
+/* We are using simple majority voting to compute the majority of k nearest neighbours of the given querry data and the results will be stored in the address
+querry_result_label */
 int querry_KNN_maj_voting_exhaustive(int vec_dim, int No_data_pts, double *data[], int data_label[], int querry_data[], int k, int *querry_result_label){
   if ( k <= 0){
     printf("Impossible to search for the %d neighbours, exiting the program\n",k);
