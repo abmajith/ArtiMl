@@ -1,0 +1,4 @@
+In this folder, you can have simple exhaustive querry search for the arbitary k- nearest neighbourhood. In the upcoming days, we will update 
+the c code to querry and normalize clever way like loading from the file rather than preloaded data in the ram. 
+
+Also, we are thinking about implementing the hash collision method to find the k nearest neighbour instead of linear search.
